@@ -17,6 +17,11 @@
 
 콘솔창에는 한 프레임당 인식한 객체의 라벨과 갯수, 실행 시간이 로그로 뜬다.
 
+'''python
+
+
   LOGGER.info(f'{s}Done. ({t3 - t2:.3f}s)')
 
+
+'''
 로그 내용은 # Print results 에
