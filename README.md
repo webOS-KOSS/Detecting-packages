@@ -1,27 +1,7 @@
 # Detecting-packages
 
-## 실행 준비
-  $ pip install -r requirements.txt
+## test branch
 
-필요한 패키지 다운로드
-(좀 많이 설치해야 함)
-
-## 실행
-  $ python detect.py --source <이미지나 동영상> --weights best.pt
-  
-  
-실행 결과는 runs/detect/ex{n} 경로로 저장됨
-
-### 정보
-실행하면 객체를 인식할 이미지나 동영상을 인식한 객체를 표시한 테두리와 함께 보여준다.
-
-콘솔창에는 한 프레임당 인식한 객체의 라벨과 갯수, 실행 시간이 로그로 뜬다.
-
-```python
-
-
-  LOGGER.info(f'{s}Done. ({t3 - t2:.3f}s)')
-
-
-```
-로그 내용은 # Print results 에
+이 브랜치는 랩탑 웹캠을 사용해 현재 택배/배달 인식이 원활히 작동하는지 확인하기 위해 만들었다.
+번거롭게 라즈베리 파이에 매번 연결해 이를 확인할 수 없기 때문에 이 브랜치에서 테스트하며
+최적의 cnt 기준 값과 --conf-thres 값을 찾을 것이다.
