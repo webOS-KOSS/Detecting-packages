@@ -49,11 +49,11 @@ from utils.torch_utils import select_device, time_sync
 
 @torch.no_grad()
 def run(
-        weights=ROOT / 'det.pt',  # model.pt path(s)
-        source=ROOT / 'data/images',  # file/dir/URL/glob, 0 for webcam
+        weights=ROOT / 'Det.pt',  # model.pt path(s)
+        source=ROOT / '0',  # file/dir/URL/glob, 0 for webcam
         data=ROOT / 'data/coco128.yaml',  # dataset.yaml path
         imgsz=(640, 640),  # inference size (height, width)
-        conf_thres=0.25,  # confidence threshold
+        conf_thres=0.7,  # confidence threshold
         iou_thres=0.45,  # NMS IOU threshold
         max_det=1000,  # maximum detections per image
         device='',  # cuda device, i.e. 0 or 0,1,2,3 or cpu
@@ -108,9 +108,11 @@ def run(
     # Run inference
     model.warmup(imgsz=(1 if pt else bs, 3, *imgsz))  # warmup
     seen, windows, dt = 0, [], [0.0, 0.0, 0.0]
-    pre_n = 0
-    cam_on = False
-    cnt = 0
+
+    pre_n = 0   # detected class in previous frame
+    cnt = 0     # the number of frames that n maintains
+    pre_cam, cam = False, False     # camera is off at the beginning
+
     for path, im, im0s, vid_cap, s in dataset:
         t1 = time_sync()
         im = torch.from_numpy(im).to(device)
@@ -141,7 +143,7 @@ def run(
             if webcam:  # batch_size >= 1
                 p, im0, frame = path[i], im0s[i].copy(), dataset.count
                 total = len(det)
-                s += f'{i}: {total} '
+                s += f'{i}: '
             else:
                 p, im0, frame = path, im0s.copy(), getattr(dataset, 'frame', 0)
 
@@ -163,24 +165,31 @@ def run(
             else:                   # The number of detected packages is zero
                 n = 0
                 
-            if pre_n == n:  # The number of detected packages is the same as before
+            if pre_n == n:  # the number of detected packages is the same as before
                 cnt += 1
-            else:           # The number of detected packages is different from before
+            else:           # the number of detected packages is different from before
                 cnt = 0
             pre_n = n
 
-            s += f"({pre_n}, {n}, {cnt}, {cam_on})\n"  # add to string
+            s += f"({pre_n}, {n}, {cnt}, {cam})\n"  # add to string
 
             if cnt > 30:
-                # start recording
-                if not cam_on and n != 0:
-                    cam_on = True
-                    s += "package detected! "   # add to string
+                if not cam and n != 0:  # the camera is supposed to be turned on in this case
+                    cam = True
+                    s += "package detected!\n"   # add to string
 
-                # stop recording
-                if cam_on and n == 0:
-                    cam_on = False
-                    s += "package disappeared! "    # add to string
+                if cam and n == 0:      # the camera is supposed to be turned off in this case
+                    cam = False
+                    s += "package disappeared!\n"    # add to string
+
+            # start recording
+            if not pre_cam and cam:     # cam has been changed from False to True
+                s += "start recording\n"    # add to string
+
+            # stop recording
+            if pre_cam and not cam:     # cam has been changed from True to False
+                s += "stop recording\n"     # add to string
+            pre_cam = cam
                 
             # Write results
             for *xyxy, conf, cls in reversed(det):
