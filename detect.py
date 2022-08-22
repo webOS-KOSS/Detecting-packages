@@ -61,7 +61,7 @@ def run(
         save_txt=False,  # save results to *.txt
         save_conf=False,  # save confidences in --save-txt labels
         save_crop=False,  # save cropped prediction boxes
-        nosave=True,  # do not save images/videos
+        nosave=False,  # do not save images/videos
         classes=None,  # filter by class: --class 0, or --class 0 2 3
         agnostic_nms=False,  # class-agnostic NMS
         augment=False,  # augmented inference
@@ -142,7 +142,6 @@ def run(
             seen += 1
             if webcam:  # batch_size >= 1
                 p, im0, frame = path[i], im0s[i].copy(), dataset.count
-                total = len(det)
                 s += f'{i}: '
             else:
                 p, im0, frame = path, im0s.copy(), getattr(dataset, 'frame', 0)
@@ -173,24 +172,27 @@ def run(
 
             s += f"({pre_n}, {n}, {cnt}, {cam})\n"  # add to string
 
-            if cnt > 30:
+            if cnt > 10:
                 if not cam and n != 0:  # the camera is supposed to be turned on in this case
                     cam = True
-                    s += "package detected!\n"   # add to string
 
                 if cam and n == 0:      # the camera is supposed to be turned off in this case
                     cam = False
-                    s += "package disappeared!\n"    # add to string
 
-            # start recording
-            if not pre_cam and cam:     # cam has been changed from False to True
-                s += "start recording\n"    # add to string
+            if not pre_cam and cam:
+                fps, w, h = 10, im0.shape[1], im0.shape[0]
+                vid_writer[i] = cv2.VideoWriter("tlqkf.mp4", cv2.VideoWriter_fourcc(*'mp4v'), fps, (w,h))
+                s += "start\n"
 
-            # stop recording
-            if pre_cam and not cam:     # cam has been changed from True to False
-                s += "stop recording\n"     # add to string
+            if cam:
+                vid_writer[i].write(im0)
+                s += "record\n"
+
+            if pre_cam and not cam:
+                vid_writer[i].release()
+                s += "stop\n"
             pre_cam = cam
-                
+
             # Write results
             for *xyxy, conf, cls in reversed(det):
                 if save_txt:  # Write to file
@@ -216,24 +218,25 @@ def run(
                 cv2.imshow(str(p), im0)
                 cv2.waitKey(1)  # 1 millisecond
 
+            
             # Save results (image with detections)
-            if save_img:
-                if dataset.mode == 'image':
-                    cv2.imwrite(save_path, im0)
-                else:  # 'video' or 'stream'
-                    if vid_path[i] != save_path:  # new video
-                        vid_path[i] = save_path
-                        if isinstance(vid_writer[i], cv2.VideoWriter):
-                            vid_writer[i].release()  # release previous video writer
-                        if vid_cap:  # video
-                            fps = vid_cap.get(cv2.CAP_PROP_FPS)
-                            w = int(vid_cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-                            h = int(vid_cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-                        else:  # stream
-                            fps, w, h = 30, im0.shape[1], im0.shape[0]
-                        save_path = str(Path(save_path).with_suffix('.mp4'))  # force *.mp4 suffix on results videos
-                        vid_writer[i] = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (w, h))
-                    vid_writer[i].write(im0)
+            # if save_img:
+            #     if dataset.mode == 'image':
+            #         cv2.imwrite(save_path, im0)
+            #     else:  # 'video' or 'stream'
+            #         if vid_path[i] != save_path:  # new video
+            #             vid_path[i] = save_path
+            #             if isinstance(vid_writer[i], cv2.VideoWriter):
+            #                 vid_writer[i].release()  # release previous video writer
+            #             if vid_cap:  # video
+            #                 fps = vid_cap.get(cv2.CAP_PROP_FPS)
+            #                 w = int(vid_cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+            #                 h = int(vid_cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+            #             else:  # stream
+            #                 fps, w, h = 30, im0.shape[1], im0.shape[0]
+            #             # save_path = str(Path(save_path).with_suffix('.mp4'))  # force *.mp4 suffix on results videos
+            #             vid_writer[i] = cv2.VideoWriter("tlqkf.mp4", cv2.VideoWriter_fourcc(*'mp4v'), fps, (w, h))
+            #         vid_writer[i].write(im0)
 
         # Print time (inference-only)
         LOGGER.info(f'{s}Done. ({t3 - t2:.3f}s)')
