@@ -24,17 +24,7 @@ Usage - formats:
                                          yolov5s_edgetpu.tflite     # TensorFlow Edge TPU
 """
 
-from picamera import PiCamera
-from googleapiclient.discovery import build
-from httplib2 import Http
-from oauth2client import file, client, tools
-
-try :
-    import argparse
-    flags = argparse.ArgumentParser(parents=[tools.argparser]).parse_args()
-except ImportError:
-    flags = None
-
+import argparse
 import os
 import platform
 import sys
@@ -42,10 +32,6 @@ from pathlib import Path
 
 import torch
 import torch.backends.cudnn as cudnn
-
-# camera setting
-camera = PiCamera()
-# camera.rotation = 180
 
 FILE = Path(__file__).resolve()
 ROOT = FILE.parents[0]  # YOLOv5 root directory
@@ -67,7 +53,7 @@ def run(
         source=ROOT / 'data/images',  # file/dir/URL/glob, 0 for webcam
         data=ROOT / 'data/coco128.yaml',  # dataset.yaml path
         imgsz=(640, 640),  # inference size (height, width)
-        conf_thres=0.25,  # confidence threshold
+        conf_thres=0.7,  # confidence threshold
         iou_thres=0.45,  # NMS IOU threshold
         max_det=1000,  # maximum detections per image
         device='',  # cuda device, i.e. 0 or 0,1,2,3 or cpu
@@ -185,47 +171,14 @@ def run(
 
             s += f"({pre_n}, {n}, {cnt}, {cam_on})\n"  # add to string
 
-            if cnt > 300:
+            if cnt > 30:
                 # start recording
                 if not cam_on and n != 0:
-                    camera.start_preview()
-                    camera.start_recording('/home/pi/Desktop/video.h264')
                     cam_on = True
                     s += "package detected! "   # add to string
 
                 # stop recording
                 if cam_on and n == 0:
-                    camera.stop_recording()
-                    camera.stop_preview()
-
-                    if os.path.isfile("video.mp4"):
-                        os.remove("video.mp4")
-                    os.system("sh codec.sh")
-
-                    SCOPES = 'https://www.googleapis.com/auth/drive.file'
-                    store = file.Storage('storage.json')
-                    creds = store.get()
-
-                    if not creds or creds.invalid:
-                        print("make new storage data file ")
-                        flow = client.flow_from_clientsecrets('credentials.json', SCOPES) # 인증정보 파일
-                        creds = tools.run_flow(flow, store, flags) if flags else tools.run(flow, store)
-
-                    DRIVE = build('drive', 'v3', http=creds.authorize(Http()))
-
-                    FILES = (
-                        ('video.mp4'), #업로드 할 파일 이름
-                    )
-
-                    folder_id = '154vOPOdG3X2ibSmo6KlrhekP0Qe4QIz_' # 업로드 될 구글 드라이브의 위치 
-
-                    for file_title in FILES :
-                        file_name = file_title
-                        metadata = {'name': 'video1.mp4', # 업로드 될 파일 이름
-                                    'parents' : [folder_id],
-                                    'mimeType': None
-                                    }
-
                     cam_on = False
                     s += "package disappeared! "    # add to string
                 
@@ -292,7 +245,7 @@ def parse_opt():
     parser.add_argument('--source', type=str, default='0', help='file/dir/URL/glob, 0 for webcam')
     parser.add_argument('--data', type=str, default=ROOT / 'data/coco128.yaml', help='(optional) dataset.yaml path')
     parser.add_argument('--imgsz', '--img', '--img-size', nargs='+', type=int, default=[640], help='inference size h,w')
-    parser.add_argument('--conf-thres', type=float, default=0.25, help='confidence threshold')
+    parser.add_argument('--conf-thres', type=float, default=0.7, help='confidence threshold')
     parser.add_argument('--iou-thres', type=float, default=0.45, help='NMS IoU threshold')
     parser.add_argument('--max-det', type=int, default=1000, help='maximum detections per image')
     parser.add_argument('--device', default='', help='cuda device, i.e. 0 or 0,1,2,3 or cpu')
