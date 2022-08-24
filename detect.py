@@ -75,16 +75,16 @@ def run(
         half=False,  # use FP16 half-precision inference
         dnn=False,  # use OpenCV DNN for ONNX inference
 ):
+    # Load source
     source = str(source)
-    save_img = not nosave and not source.endswith('.txt')  # save inference images
     is_file = Path(source).suffix[1:] in (IMG_FORMATS + VID_FORMATS)
     is_url = source.lower().startswith(('rtsp://', 'rtmp://', 'http://', 'https://'))
     webcam = source.isnumeric() or source.endswith('.txt') or (is_url and not is_file)
     if is_url and is_file:
         source = check_file(source)  # download
 
-    # Directories
-    # save_dir = increment_path(Path(project), exist_ok=exist_ok)  # increment run
+    # Directory for saved result
+    save_img = not nosave and not source.endswith('.txt')  # save inference images
     save_dir = Path(project)
 
     # Load model
@@ -108,8 +108,8 @@ def run(
     model.warmup(imgsz=(1 if pt else bs, 3, *imgsz))  # warmup
     seen, windows, dt = 0, [], [0.0, 0.0, 0.0]
 
-    pre_n = 0   # detected class in previous frame
-    cnt = 0     # the number of frames that n maintains
+    pre_n = 0   # the number of detected packages in previous frame
+    cnt = 0     # the number of frames that detected packages stay still
     pre_cam, cam = False, False     # camera is off at the beginning
 
     for path, im, im0s, vid_cap, s in dataset:
@@ -153,14 +153,13 @@ def run(
             imc = im0.copy() if save_crop else im0  # for save_crop
             annotator = Annotator(im0, line_width=line_thickness, example=str(names))
 
-            if len(det):    # something detected (it might be wrong)
+            if len(det):    # something detected as package (it might be wrong)
                 # Rescale boxes from img_size to im0 size
                 det[:, :4] = scale_coords(im.shape[2:], det[:, :4], im0.shape).round()
-
                 # Print results
                 for c in det[:, -1].unique():
                     n = (det[:, -1] == c).sum()  # detections per class
-            else:                   # The number of detected packages is zero
+            else:           # nothing detecdted as package
                 n = 0
                 
             if pre_n == n:  # the number of detected packages is the same as before
@@ -169,26 +168,28 @@ def run(
                 cnt = 0
             pre_n = n
 
-            s += f"({pre_n}, {n}, {cnt}, {cam})\n"  # add to string
+            # Print result per frame
+            s += f"({pre_n}, {n}, {cnt}, {cam})\n"
 
+            # Trigger for recording
             if cnt > 10:
-                if not cam and n != 0:  # the camera is supposed to be turned on in this case
+                if not cam and n != 0:
                     cam = True
-
-                if cam and n == 0:      # the camera is supposed to be turned off in this case
+                if cam and n == 0:
                     cam = False
 
+            # Recording
             if not pre_cam and cam:
-                fps, w, h = 10, im0.shape[1], im0.shape[0]
+                fps, w, h = 30, im0.shape[1], im0.shape[0]
                 vid_writer[i] = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (w,h))
-                s += "recording started"
+                s += "recording started "
             if cam:
                 vid_writer[i].write(im0)
                 s += "recording..."
-
+                
             if pre_cam and not cam:
                 vid_writer[i].release()
-                s += "recording stoped"
+                s += "recording stoped "
             pre_cam = cam
 
             # Write results
@@ -216,7 +217,6 @@ def run(
                 cv2.imshow(str(p), im0)
                 cv2.waitKey(1)  # 1 millisecond
 
-            
             # Save results (image with detections)
             if save_img:
                 if dataset.mode == 'image':
