@@ -46,6 +46,7 @@ from utils.general import (LOGGER, Profile, check_file, check_img_size, check_im
 from utils.plots import Annotator, colors, save_one_box
 from utils.torch_utils import select_device, smart_inference_mode
 
+import upload
 
 @smart_inference_mode()
 def run(
@@ -207,6 +208,7 @@ def run(
                 
             if pre_cam and not cam:
                 vid_writer[i].release()
+                os.system("python upload.py")
                 s += "recording stoped "
             pre_cam = cam
 
