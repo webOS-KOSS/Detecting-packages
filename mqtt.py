@@ -5,11 +5,10 @@ from multiprocessing import Process
 
 broker = 'localhost'
 port = 1883
-topic = 'delivery'
 
 class Pub():
 
-    def __init__(self) -> None:
+    def __init__(self, topic) -> None:
         self.broker = broker
         self.port = port
         self.topic = topic
@@ -49,7 +48,7 @@ class Pub():
         self.publish(client, msg)
 
 class Sub():
-    def __init__(self) -> None:
+    def __init__(self, topic) -> None:
         self.broker = broker
         self.port = port
         self.topic = topic
@@ -74,7 +73,7 @@ class Sub():
         def on_message(client, userdata, msg):
             print(f"Received `{msg.payload.decode()}` from `{msg.topic}` topic")
 
-        client.subscribe(topic)
+        client.subscribe(self.topic)
         client.on_message = on_message
 
     def run(self):
@@ -84,8 +83,8 @@ class Sub():
     
 
 if __name__ == '__main__':
-    pub = Pub()
-    sub = Sub()
+    pub = Pub('test')
+    sub = Sub('test')
     sub_proc = Process(target=sub.run)
     pub_proc = Process(target=pub.run, args=("arrived",))
     sub_proc.start()
