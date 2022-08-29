@@ -46,7 +46,8 @@ from utils.general import (LOGGER, Profile, check_file, check_img_size, check_im
 from utils.plots import Annotator, colors, save_one_box
 from utils.torch_utils import select_device, smart_inference_mode
 
-import upload
+from mqtt import Pub
+pub = Pub()
 
 @smart_inference_mode()
 def run(
@@ -196,20 +197,24 @@ def run(
                 if cam and n == 0:
                     cam = False
 
-            # Recording
+            # Delivery arrived
             if not pre_cam and cam:
                 fps, w, h = 10, im0.shape[1], im0.shape[0]
                 save_path = str(Path(save_path).with_suffix('.mp4'))
                 vid_writer[i] = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (w,h))
                 s += "recording started "
+                pub.run("arrived")
+
             if cam:
                 vid_writer[i].write(im0)
                 s += "recording..."
-                
+
+            # Detliver received (by anyone who might be a thief)
             if pre_cam and not cam:
                 vid_writer[i].release()
                 os.system("python upload.py")
                 s += "recording stoped "
+                pub.run("received")
             pre_cam = cam
 
             # Stream results
