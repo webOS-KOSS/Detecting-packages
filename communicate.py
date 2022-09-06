@@ -6,13 +6,13 @@ from multiprocessing import Process
 broker = 'localhost'
 port = 1883
 
-class Pub():
+class Mqtt():
 
-    def __init__(self, topic) -> None:
+    def __init__(self, id, topic) -> None:
         self.broker = broker
         self.port = port
         self.topic = topic
-        self.client_id = 'pub'
+        self.client_id = id
         self.username = 'asdf8768'
         self.password = 'asdf1234'
 
@@ -41,33 +41,10 @@ class Pub():
         else:
             print(f"Failed to send message to topic {self.topic}")
 
-
-    def run(self, msg):
+    def pub(self, msg):
         client = self.connect_mqtt()
         client.loop()
         self.publish(client, msg)
-
-class Sub():
-    def __init__(self, topic) -> None:
-        self.broker = broker
-        self.port = port
-        self.topic = topic
-        self.client_id = 'sub'
-        self.username = 'asdf8768'
-        self.password = 'asdf1234'
-
-    def connect_mqtt(self) -> mqtt_client:
-        def on_connect(client, userdata, flags, rc):
-            if rc == 0:
-                print("Connected to MQTT Broker!")
-            else:
-                print("Failed to connect, return code %d\n", rc)
-
-        client = mqtt_client.Client(self.client_id)
-        client.username_pw_set(self.username, self.password)
-        client.on_connect = on_connect
-        client.connect(self.broker, self.port)
-        return client
 
     def subscribe(self, client: mqtt_client):
         def on_message(client, userdata, msg):
@@ -76,16 +53,16 @@ class Sub():
         client.subscribe(self.topic)
         client.on_message = on_message
 
-    def run(self):
+    def sub(self):
         client = self.connect_mqtt()
         self.subscribe(client)
         client.loop_forever()
     
 
 if __name__ == '__main__':
-    pub = Pub('test')
-    sub = Sub('test')
-    sub_proc = Process(target=sub.run)
-    pub_proc = Process(target=pub.run, args=("arrived",))
+    sub = Mqtt("sub", "topic")
+    pub = Mqtt("pub", "topic")
+    sub_proc = Process(target=sub.sub)
+    pub_proc = Process(target=pub.pub, args=("arrived",))
     sub_proc.start()
     pub_proc.start()

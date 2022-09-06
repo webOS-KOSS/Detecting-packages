@@ -47,9 +47,9 @@ from utils.general import (LOGGER, Profile, check_file, check_img_size, check_im
 from utils.plots import Annotator, colors, save_one_box
 from utils.torch_utils import select_device, smart_inference_mode
 
-from mqtt import Pub
-pub_delivery = Pub('delivery')
-pub_fliename = Pub('file')
+from communicate import Mqtt
+mqtt_delivery = Mqtt('delivery_publisher' ,'delivery')
+mqtt_fliename = Mqtt('filename_publisher' ,'filename')
 
 @smart_inference_mode()
 def run(
@@ -201,13 +201,13 @@ def run(
 
             # Delivery arrived
             if not pre_cam and cam:
-                fps, w, h = 10, im0.shape[1], im0.shape[0]
-                rightnow = time.strftime('%Y-%m-%d %H:%M:%S')
+                fps, w, h = 3, im0.shape[1], im0.shape[0]
+                rightnow = time.strftime('%Y-%m-%d|%H:%M:%S')
                 save_path = str(save_dir / rightnow)
                 save_path = str(Path(save_path).with_suffix('.mp4'))
                 vid_writer[i] = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (w,h))
                 s += "recording started "
-                pub_delivery.run("arrived")
+                mqtt_delivery.pub("arrived")
 
             if cam:
                 vid_writer[i].write(im0)
@@ -216,10 +216,10 @@ def run(
             # Detliver received (by anyone who might be a thief)
             if pre_cam and not cam:
                 vid_writer[i].release()
-                os.system("python upload.py")
+                # os.system("python upload.py")
                 s += "recording stoped "
-                pub_delivery.run("received")
-                pub_fliename.run(str(rightnow)+"mp4")
+                mqtt_delivery.pub("received")
+                mqtt_fliename.pub(str(rightnow)+".mp4")
             pre_cam = cam
 
             # Stream results
