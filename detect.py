@@ -49,7 +49,7 @@ from utils.torch_utils import select_device, smart_inference_mode
 
 from communicate import Mqtt
 mqtt_delivery = Mqtt('delivery_publisher' ,'delivery')
-mqtt_fliename = Mqtt('filename_publisher' ,'filename')
+mqtt_fliename = Mqtt('fileName_publisher' ,'fileName')
 
 @smart_inference_mode()
 def run(
