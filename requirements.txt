@@ -13,7 +13,7 @@ torch>=1.7.0
 torchvision>=0.8.1
 tqdm>=4.64.0
 paho-mqtt>=1.6.1
-protobuf<4.21.6  # https://github.com/ultralytics/yolov5/issues/8012
+protobuf<4.21.8  # https://github.com/ultralytics/yolov5/issues/8012
 
 # Upload to google drive ----------------------
 google-api-python-client>=2.57.0
