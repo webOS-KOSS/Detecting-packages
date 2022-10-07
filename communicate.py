@@ -1,9 +1,7 @@
-# python 3.6
-
 from paho.mqtt import client as mqtt_client
 from multiprocessing import Process
 
-broker = '15.164.244.41'
+broker = '3.34.50.139'
 port = 1883
 
 class Mqtt():
