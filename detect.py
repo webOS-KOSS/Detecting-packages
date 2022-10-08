@@ -202,11 +202,11 @@ def run(
             if not pre_cam and cam:
                 fps, w, h = 3, im0.shape[1], im0.shape[0]
                 rightnow = time.strftime('%Y-%m-%d_%H:%M:%S')
-                save_path = str(save_dir / rightnow)
+                save_path = str(save_dir / "pre")
                 save_path = str(Path(save_path).with_suffix('.mp4'))
                 vid_writer[i] = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (w,h))
                 s += "recording started "
-                mqtt_delivery.pub("1")
+                mqtt_delivery.pub(rightnow)
 
             if cam:
                 vid_writer[i].write(im0)
@@ -215,7 +215,10 @@ def run(
             # Detliver received (by anyone who might be a thief)
             if pre_cam and not cam:
                 vid_writer[i].release()
+                os.system(f"ffmpeg -i ./vids/pre.mp4 -vcodec libx264 ./vids/{rightnow}.mp4")
+                os.system("rm -f ./vids/pre.mp4")
                 os.system(f"python upload.py --vid {rightnow}.mp4")
+                os.system(f"rm -f ./vids/{rightnow}.mp4")
                 s += "recording stoped "
             pre_cam = cam
 
