@@ -48,7 +48,8 @@ from utils.plots import Annotator, colors, save_one_box
 from utils.torch_utils import select_device, smart_inference_mode
 
 from communicate import Mqtt
-mqtt_delivery = Mqtt('delivery_publisher' ,'delivery/arrived')
+mqtt_delivery_arrived = Mqtt('delivery_publisher' ,'delivery/arrived')
+mqtt_delivery_received = Mqtt('delivery_publisher' ,'delivery/received')
 
 @smart_inference_mode()
 def run(
@@ -202,12 +203,11 @@ def run(
             if not pre_cam and cam:
                 fps, w, h = 3, im0.shape[1], im0.shape[0]
                 rightnow = time.strftime('%Y-%m-%d_%H:%M:%S')
-                save_path = str(save_dir / "pre")
+                save_path = str(save_dir / rightnow)
                 save_path = str(Path(save_path).with_suffix('.mp4'))
                 vid_writer[i] = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (w,h))
                 s += "recording started "
-                mqtt_delivery.pub(rightnow)
-
+                mqtt_delivery_arrived.pub(f"{{\"time\" : \"{rightnow}\", \"status\" : \"arrived\"}}")
             if cam:
                 vid_writer[i].write(im0)
                 s += "recording..."
@@ -215,10 +215,10 @@ def run(
             # Detliver received (by anyone who might be a thief)
             if pre_cam and not cam:
                 vid_writer[i].release()
-                os.system(f"ffmpeg -i ./vids/pre.mp4 -vcodec libx264 ./vids/{rightnow}.mp4")
-                os.system("rm -f ./vids/pre.mp4")
                 os.system(f"python upload.py --vid {rightnow}.mp4")
                 os.system(f"rm -f ./vids/{rightnow}.mp4")
+                rightnow = time.strftime('%Y-%m-%d_%H:%M:%S')
+                mqtt_delivery_received.pub(f"{{\"time\" : \"{rightnow}\", \"status\" : \"received\"}}")
                 s += "recording stoped "
             pre_cam = cam
 

@@ -2,15 +2,16 @@ import requests
 import argparse
 
 def upload(vid):
-    url = "http://localhost:3000/package/"
+    url = "http://192.168.43.4:3000/package/"
+    # url = "http://localhost/package/"
     data = {'title':'metadata','timeDuration':120}
     file = open("vids/"+vid, 'rb')
-    files = {'messageFile': file}
+    files = {'file': file}
 
-    req = requests.post(url, files=files, json=data)
-    # print (req.status_code)
-    # print (req.content)
-    print (req)
+    res = requests.post(url, files=files, json=data)
+    print (res.status_code)
+    print (res.content)
+    # print (res)
 
 def parse_opt():
     parser = argparse.ArgumentParser()
