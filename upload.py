@@ -2,7 +2,7 @@ import requests
 import argparse
 
 def upload(vid):
-    url = "http://192.168.43.4:3000/package/"
+    url = "http://3.34.50.139:8000/package/"
     # url = "http://localhost/package/"
     data = {'title':'metadata','timeDuration':120}
     file = open("vids/"+vid, 'rb')
