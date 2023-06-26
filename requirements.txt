@@ -7,7 +7,7 @@ cycler==0.11.0
 decorator==5.1.1
 executing==1.0.0
 fonttools==4.37.1
-grpcio==1.47.0
+grpcio==1.56.0
 httplib2==0.20.4
 idna==3.3
 importlib-metadata==4.12.0
