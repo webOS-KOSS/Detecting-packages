@@ -49,7 +49,7 @@ seaborn==0.11.2
 six==1.16.0
 stack-data==0.5.0
 tensorboard==2.10.0
-tensorboard-data-server==0.6.1
+tensorboard-data-server==0.7.1
 tensorboard-plugin-wit==1.8.1
 thop==0.1.1.post2207130030
 torch==1.12.1
