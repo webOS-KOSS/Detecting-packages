@@ -1,4 +1,4 @@
-absl-py==1.2.0
+absl-py==2.1.0
 asttokens==2.0.8
 backcall==0.2.0
 cachetools==5.2.0
